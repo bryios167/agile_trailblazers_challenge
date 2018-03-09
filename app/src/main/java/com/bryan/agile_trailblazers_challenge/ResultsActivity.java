@@ -2,7 +2,6 @@ package com.bryan.agile_trailblazers_challenge;
 
 import android.content.DialogInterface;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -18,6 +17,7 @@ import com.bryan.agile_trailblazers_challenge.model.WeatherItem;
 import com.bryan.agile_trailblazers_challenge.model.WeatherResults;
 import com.bryan.agile_trailblazers_challenge.remote.SOService;
 import com.bryan.agile_trailblazers_challenge.util.ApiUtil;
+import com.bryan.agile_trailblazers_challenge.util.ErrorHandlerUtil;
 import com.bryan.agile_trailblazers_challenge.util.NetworkUtil;
 
 import java.util.Calendar;
@@ -85,8 +85,9 @@ public class ResultsActivity extends AppCompatActivity {
 
     // Retrieve weather information for given zip code.
     public void getWeatherInfo(final String zipcode) {
+        spinner.setVisibility(View.VISIBLE);
+
         if (NetworkUtil.isOnline(getApplicationContext())) {
-            spinner.setVisibility(View.VISIBLE);
 
             mService.getResults(zipcode, UNITS, API_KEY)
                     .enqueue(new Callback<WeatherResults>() {
@@ -145,26 +146,21 @@ public class ResultsActivity extends AppCompatActivity {
         weatherDetailslayout.setVisibility(View.GONE);
         spinner.setVisibility(View.GONE);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage(message)
-                .setTitle(title)
-                .setPositiveButton(positive, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        finish();
-                    }
-                });
+        DialogInterface.OnClickListener positiveListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                finish();
+            }
+        };
+        DialogInterface.OnClickListener negativeListener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                getWeatherInfo(theZipCode);
+            }
+        };
 
-        if (negative != null) {
-            builder.setNegativeButton(negative, new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    getWeatherInfo(theZipCode);
-                }
-            });
-        }
-
-        builder.show();
+        ErrorHandlerUtil.showErrorDialog(this, message, title, positive,
+                positiveListener, negative, negativeListener);
     }
 
     // If successful, display weather information for given zip code.
